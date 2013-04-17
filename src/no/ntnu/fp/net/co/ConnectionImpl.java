@@ -231,56 +231,67 @@ public class ConnectionImpl extends AbstractConnection {
 	 * @see Connection#close()
 	 */
 	public void close() throws IOException {
-		KtnDatagram acknowledge, datagram, finalAknowledge = null;
-		if(state == State.CLOSE_WAIT){
+		KtnDatagram ack; 
+		KtnDatagram datagram; 
+		KtnDatagram finAck = null;
+		
+		if(state==State.CLOSE_WAIT){
 			sendAck(lastDatagramReceived, false);
 			try{
 				Thread.currentThread().sleep(1000);
-			} catch (InterruptedException e){
+			}catch(InterruptedException e){
 				e.printStackTrace();
 			}
-			acknowledge = receiveAck();
+			try{
+				datagram = constructInternalPacket(Flag.FIN);
+				simplySendPacket(datagram);
+			} catch(ClException e){
+				e.printStackTrace();
+			}
+			ack = receiveAck();
 			state = State.CLOSED;
 		}
 		else if(state == State.ESTABLISHED){
-			try {
+			try{
 				datagram = constructInternalPacket(Flag.FIN);
 				simplySendPacket(datagram);
-			} catch (ClException e){
+			} catch(ClException e){
 				e.printStackTrace();
 			}
 			state = State.FIN_WAIT_1;
-			acknowledge = receiveAck();
-			if(acknowledge == null){
+			ack = receiveAck();
+			if(ack == null){
 				if(resends < maxresends){
-					state = State.ESTABLISHED;
-					try {
-						close();
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
+					reclose();
 					return;
 				}
-				else {
-					state = State.CLOSED;
-				}
-				state = State.FIN_WAIT_2;
-				finalAknowledge = receiveAck();
-				if(finalAknowledge == null){
-					finalAknowledge = receiveAck();
-				}
-				if(finalAknowledge != null){
-					sendAck(finalAknowledge, false);
-				}
+				else state = State.CLOSED;
 			}
-			state = State.CLOSED;
+			state = State.FIN_WAIT_2;
+			finAck = receiveAck();
+			if(finAck == null) finAck = receiveAck();
+			if(finAck != null) sendAck(finAck, false);
 		}
+		state = State.CLOSED;
 	}
 
 
 
 
 
+
+	private void reclose() {
+		// TODO Auto-generated method stub
+		
+		state = State.ESTABLISHED;
+		
+		try{
+			close();
+		} catch(IOException e){
+			e.printStackTrace();
+		}
+		
+	}
 
 	private boolean isGhostPacket(KtnDatagram datagram) {
 		// TODO Auto-generated method stub
