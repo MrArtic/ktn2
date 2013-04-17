@@ -192,9 +192,11 @@ public class ConnectionImpl extends AbstractConnection {
     		throw new ConnectException();
     	}
     } else {
-    	if(!isGhostPacket()){
+    	if(!isGhostPacket(datagram)){
     		System.out.println("Not a ghost!");
-    		if(isValid)
+    		if(isValid(datagram)){
+    			
+    		}
     	}
     }
 
@@ -258,9 +260,13 @@ public class ConnectionImpl extends AbstractConnection {
     
     
     
-    private boolean isGhostPacket() {
+    private boolean isGhostPacket(KtnDatagram datagram) {
 		// TODO Auto-generated method stub
-		return false;
+    	if(datagram.getSrc_addr() != null){
+    		return !(datagram.getSrc_addr().equals(remoteAddress) && datagram.getSrc_port()==remotePort);
+    		
+    	}
+		return true;;
 	}
 
 	/**
