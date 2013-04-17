@@ -73,7 +73,32 @@ public class ConnectionImpl extends AbstractConnection {
      */
     public void connect(InetAddress remoteAddress, int remotePort) throws IOException,
             SocketTimeoutException {
-        throw new NotImplementedException();
+//        throw new NotImplementedException();
+    	
+    	this.remoteAddress = remoteAddress.getHostAddress();
+    	this.remotePort = remotePort;
+    	
+    	//We need a syn!
+    	KtnDatagram syn = constructInternalPacket(Flag.SYN);
+    	
+    	try{
+    		simplySendPacket(syn);
+    	}catch (ClException e){
+    		e.printStackTrace();
+    	}
+    	
+    	//Need to wait for synAck
+    	KtnDatagram synAck = receiveAck();
+    	
+    	if(synAck != null){
+    		this.remotePort = synAck.getSrc_port();
+    	} else {
+    		throw new SocketTimeoutException();
+    	}
+    	if(synAck.getFlag() == Flag.SYN_ACK){
+    		state = State.ESTABLISHED;
+    	}
+    	sendAck(synAck, false);
     }
 
     /**
