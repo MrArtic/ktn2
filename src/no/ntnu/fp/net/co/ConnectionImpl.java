@@ -214,6 +214,27 @@ public class ConnectionImpl extends AbstractConnection {
      */
     public String receive() throws ConnectException, IOException {
         throw new NotImplementedException();
+    	KtnDatagram datagram = null;
+    	try{
+    		datagram = receivePacket(false);
+    	}catch (EOFException e){ // is that a FIN?
+    		state = State.CLOSE_WAIT;
+    				throw new EOFException();
+    	}
+    	// Having a look at msg and acking if all is good
+    	if(datagram == null){
+    		if(rereceives < maxrereceives){
+    			rereceives++;
+    			String msg = receive();
+    			rereceives = 0;
+    			return msg;
+    		}
+    	}else{
+    		state = State.CLOSED;
+    		throw new ConnectException();
+    	}
+    } else {
+    	
     }
 
     
