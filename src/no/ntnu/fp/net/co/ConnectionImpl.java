@@ -38,7 +38,12 @@ public class ConnectionImpl extends AbstractConnection {
 
     /** Keeps track of the used ports for each server port. */
     private static Map<Integer, Boolean> usedPorts = Collections.synchronizedMap(new HashMap<Integer, Boolean>());
-
+    private ClSocket socket = new ClSocket();
+    private final int maxresends = 5;
+    private final int maxrereceives = 5;
+    private int resends = 0;
+    private int rereceives = 0;
+    private KtnDatagram lastDatagramReceived = null;
     /**
      * Initialise initial sequence number and setup state machine.
      * 
@@ -46,7 +51,17 @@ public class ConnectionImpl extends AbstractConnection {
      *            - the local port to associate with this connection
      */
     public ConnectionImpl(int myPort) {
-        throw new NotImplementedException();
+//        throw new NotImplementedException();
+    	this.myPort = myPort;
+    	this.myAddress = getIPv4Address();
+    	state = state.CLOSED; //there's no connection from the get-go
+    }
+    
+    public ConnectionImpl(String myAddress, int myPort, String remoteAddress, int remotePort){
+    	this.myAddress = myAddress;
+    	this.myPort = myPort;
+    	this.remoteAddress = remoteAddress;
+    	this.remotePort = remotePort;
     }
 
     private String getIPv4Address() {
@@ -108,7 +123,27 @@ public class ConnectionImpl extends AbstractConnection {
      * @see Connection#accept()
      */
     public Connection accept() throws IOException, SocketTimeoutException {
-        throw new NotImplementedException();
+//        throw new NotImplementedException();
+        
+        state = State.LISTEN;
+        
+        KtnDatagram syn;
+        do{
+        	syn = receivePacket(true);
+        	System.out.println(syn);
+        } while (syn == null || syn.getFlag() != Flag.SYN);
+        
+        this.remoteAddress = syn.getSrc_addr();
+        this.remotePort = syn.getSrc_port();
+        state = State.SYN_RCVD;
+        
+        ConnectionImpl newConnection = new ConnectionImpl(this.myAddress, getNewPort(), this.remoteAddress, this.remotePort);
+        
+        return (Connection) newConnection;
+    }
+    
+    private int getNewPort(){
+    	return (int) (Math.random()*40000+10000); //assuming the port we get is not in use!
     }
 
     /**
