@@ -139,6 +139,15 @@ public class ConnectionImpl extends AbstractConnection {
         
         ConnectionImpl newConnection = new ConnectionImpl(this.myAddress, getNewPort(), this.remoteAddress, this.remotePort);
         
+        newConnection.sendAck(syn, true); //sends ack
+        
+        KtnDatagram ack = newConnection.receiveAck();
+        
+        if(ack == null || ack.getFlag() != Flag.ACK) throw new SocketTimeoutException();
+        
+        newConnection.state = State.ESTABLISHED;
+        
+        state = State.LISTEN;
         return (Connection) newConnection;
     }
     
