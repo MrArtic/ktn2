@@ -171,7 +171,7 @@ public class ConnectionImpl extends AbstractConnection {
 	 * @see AbstractConnection#sendAck(KtnDatagram, boolean)
 	 */
 	public String receive() throws ConnectException, IOException {
-		throw new NotImplementedException();
+
 		KtnDatagram datagram = null;
 		try{
 			datagram = receivePacket(false);
@@ -190,6 +190,33 @@ public class ConnectionImpl extends AbstractConnection {
 			}else{
 				state = State.CLOSED;
 				throw new ConnectException();
+			}
+		} else {
+			if(!isGhostPacket(datagram)){
+				System.out.println("Not a ghost!");
+				if(isValid(datagram)){
+					if(lastDatagramReceived != null && datagram.getSeq_nr()-1 != lastDatagramReceived.getSeq_nr()){
+						//is this the data we're waiting for?
+						System.out.println("1");
+						sendAck(lastDatagramReceived, false);
+						return receive();
+					}else{
+						System.out.println("2");
+						sendAck(datagram, false);
+						lastDatagramReceived = datagram;
+						return (String) datagram.getPayload();
+					}
+				}else{
+					if(lastDatagramReceived != null){
+						System.out.println("3");
+						sendAck(lastDatagramReceived, false); //requesting resend
+						return receive();
+					}
+					return receive();
+				}
+			}else {
+				System.out.println("it's a ghost!");
+				return receive();
 			}
 		}
 	}
@@ -261,7 +288,7 @@ public class ConnectionImpl extends AbstractConnection {
 			return !(datagram.getSrc_addr().equals(remoteAddress) && datagram.getSrc_port()==remotePort);
 
 		}
-		return true;;
+		return true;
 	}
 
 	/**
