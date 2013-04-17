@@ -183,8 +183,44 @@ public class ConnectionImpl extends AbstractConnection {
      * @see Connection#close()
      */
     public void close() throws IOException {
-    	KtnDatagram acknowledge, datagram, finnishedAknowledge = null;
+    	KtnDatagram acknowledge, datagram, finalAknowledge = null;
     	if(state == State.CLOSE_WAIT){
+    		sendAck(lastDatagramReceived, false);
+    		try{
+    			Thread.currentThread().sleep(1000);
+    		} catch (InterruptedException e){
+    			e.printStackTrace();
+    		}
+    		acknowledge = receiveAck();
+    		state = State.CLOSED;
+    	}
+    	else if(state == State.ESTABLISHED){
+    		try {
+    			datagram = constructInternalPacket(Flag.FIN);
+    			simplySendPacket(datagram);
+    		} catch (ClException e){
+    			e.printStackTrace();
+    		}
+    		state = State.FIN_WAIT_1;
+    		acknowledge = receiveAck();
+    		if(acknowledge == null){
+    			if(resends < maxresends){
+    				reclose();
+    				return;
+    			}
+    			else {
+    				state = State.CLOSED;
+    			}
+    			state = State.FIN_WAIT_2;
+    			finalAknowledge = receiveAck();
+    			if(finalAknowledge == null){
+    				finalAknowledge = receiveAck();
+    			}
+    			if(finalAknowledge != null){
+    				sendAck(finalAknowledge, false);
+    			}
+    		}
+    		state = State.CLOSED;
     	}
     }
 
