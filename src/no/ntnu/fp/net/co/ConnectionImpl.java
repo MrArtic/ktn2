@@ -174,15 +174,24 @@ public class ConnectionImpl extends AbstractConnection {
         throw new NotImplementedException();
     }
 
+    
+    
+    
     /**
      * Close the connection.
      * 
      * @see Connection#close()
      */
     public void close() throws IOException {
-        throw new NotImplementedException();
+    	KtnDatagram acknowledge, datagram, finnishedAknowledge = null;
+    	if(state == State.CLOSE_WAIT){
+    	}
     }
 
+    
+    
+    
+    
     /**
      * Test a packet for transmission errors. This function should only called
      * with data or ACK packets in the ESTABLISHED state.
