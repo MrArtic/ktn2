@@ -234,7 +234,10 @@ public class ConnectionImpl extends AbstractConnection {
     		throw new ConnectException();
     	}
     } else {
-    	
+    	if(!isGhostPacket()){
+    		System.out.println("Not a ghost!");
+    		if(isValid)
+    	}
     }
 
     
@@ -291,7 +294,12 @@ public class ConnectionImpl extends AbstractConnection {
     
     
     
-    /**
+    private boolean isGhostPacket() {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	/**
      * Test a packet for transmission errors. This function should only called
      * with data or ACK packets in the ESTABLISHED state.
      * 
