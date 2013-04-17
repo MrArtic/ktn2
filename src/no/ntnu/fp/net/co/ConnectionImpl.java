@@ -300,6 +300,6 @@ public class ConnectionImpl extends AbstractConnection {
 	 * @return true if packet is free of errors, false otherwise.
 	 */
 	protected boolean isValid(KtnDatagram packet) {
-		throw new NotImplementedException();
+		return packet.getChecksum() == packet.calculateChecksum();
 	}
 }

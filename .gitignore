@@ -2,6 +2,9 @@
 *.DS_Store
 .classpath
 
+#Generated files#
+Log/
+
 # Package Files #
 *.jar
 *.war
