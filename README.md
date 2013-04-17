@@ -1,4 +1,1 @@
-ktn2
-====
-
-KTN del 2 av øvingsprosjekt
+#KTN del 2 av øvingsprosjekt
