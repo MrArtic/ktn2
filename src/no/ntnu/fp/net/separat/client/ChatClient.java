@@ -40,7 +40,7 @@ public class ChatClient {
 
     private Connection connection;
 
-    private static boolean SIMPLE_CONNECTION = true;
+    private static boolean SIMPLE_CONNECTION = false;
 
     public ChatClient(String address, int port) {
         port_to_server = port;
