@@ -128,7 +128,7 @@ public class ConnectionImpl extends AbstractConnection {
 			throw e;
 		}
 		catch (Exception e) {
-			throw new ConnectException("Could not establish connection with server");
+			throw new ConnectException("Could not establish connection!");
 		}
 		state = State.ESTABLISHED;
 		Log.writeToLog("Connection established", "ConnectionImpl");
