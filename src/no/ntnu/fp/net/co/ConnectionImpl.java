@@ -62,6 +62,7 @@ public class ConnectionImpl extends AbstractConnection {
 		this.myPort = myPort;
 		this.remoteAddress = remoteAddress;
 		this.remotePort = remotePort;
+		state = state.SYN_RCVD;
 	}
 
 	private String getIPv4Address() {
@@ -138,19 +139,19 @@ public class ConnectionImpl extends AbstractConnection {
 		state = State.SYN_RCVD;
 
 		ConnectionImpl newConnection = new ConnectionImpl(this.myAddress, getNewPort(), this.remoteAddress, this.remotePort);
-		
+
 		newConnection.sendAck(syn, true);
-		
+
 		KtnDatagram ack = newConnection.receiveAck();
-		
+
 		if(ack==null || ack.getFlag() != Flag.ACK){
 			throw new SocketTimeoutException();
 		}
-		
+
 		newConnection.state = State.ESTABLISHED;
-		
+
 		state = State.LISTEN;
-		
+
 		return (Connection) newConnection;
 	}
 
@@ -171,41 +172,41 @@ public class ConnectionImpl extends AbstractConnection {
 	 * @see no.ntnu.fp.net.co.Connection#send(String)
 	 */
 	public void send(String msg) throws ConnectException, IOException {
-//      throw new NotImplementedException();
-  	if(state!= State.ESTABLISHED) throw new ConnectException("No connection established!");
-  	KtnDatagram datagram = constructDataPacket(msg);
-  	
-  	KtnDatagram ack = sendDataPacketWithRetransmit(datagram);//sends msg, waits for ack
-  	System.out.println("send complete");
-  	if(ack == null){
-  		System.out.println("Where's the ack?");
-  		if(resends < maxresends){
-  			resends++;
-  			send(msg);
-  			resends = 0;
-  			return;
-  		} else {
-  			state = State.CLOSED;
-  			throw new ConnectException("Conncetion lost");
-  			
-  		}
-  		
-  	} else { //if ack showed up
-  		System.out.println("ack received");
-  		if(!isValid(ack)){
-  			System.out.println("ack not valid");
-  		}else if (ack.getAck() > nextSequenceNo-1){
-  			
-  		}else if(ack.getAck() < nextSequenceNo-1){
-  			//assuming duplicate, older ack
-  			nextSequenceNo--;
-  			send(msg);
-  			return;
-  		}else{
-  			System.out.println("Valid ack received!");
-  		}
-  	}
-  }
+		//      throw new NotImplementedException();
+		if(state!= State.ESTABLISHED) throw new ConnectException("No connection established!");
+		KtnDatagram datagram = constructDataPacket(msg);
+
+		KtnDatagram ack = sendDataPacketWithRetransmit(datagram);//sends msg, waits for ack
+		System.out.println("send complete");
+		if(ack == null){
+			System.out.println("Where's the ack?");
+			if(resends < maxresends){
+				resends++;
+				send(msg);
+				resends = 0;
+				return;
+			} else {
+				state = State.CLOSED;
+				throw new ConnectException("Conncetion lost");
+
+			}
+
+		} else { //if ack showed up
+			System.out.println("ack received");
+			if(!isValid(ack)){
+				System.out.println("ack not valid");
+			}else if (ack.getAck() > nextSequenceNo-1){
+
+			}else if(ack.getAck() < nextSequenceNo-1){
+				//assuming duplicate, older ack
+				nextSequenceNo--;
+				send(msg);
+				return;
+			}else{
+				System.out.println("Valid ack received!");
+			}
+		}
+	}
 
 	/**
 	 * Wait for incoming data.
@@ -279,7 +280,7 @@ public class ConnectionImpl extends AbstractConnection {
 		KtnDatagram ack; 
 		KtnDatagram datagram; 
 		KtnDatagram finAck = null;
-		
+
 		if(state==State.CLOSE_WAIT){
 			sendAck(lastDatagramReceived, false);
 			try{
@@ -327,15 +328,15 @@ public class ConnectionImpl extends AbstractConnection {
 
 	private void reclose() {
 		// TODO Auto-generated method stub
-		
+
 		state = State.ESTABLISHED;
-		
+
 		try{
 			close();
 		} catch(IOException e){
 			e.printStackTrace();
 		}
-		
+
 	}
 
 	private boolean isGhostPacket(KtnDatagram datagram) {

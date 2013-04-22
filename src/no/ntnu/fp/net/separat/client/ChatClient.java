@@ -26,7 +26,7 @@ public class ChatClient {
 
     private static int portUsed = 0;
 
-    private String username = "default";
+    private String username = "jenske";
 
     private Gui gui;
 
