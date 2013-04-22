@@ -37,8 +37,7 @@ import no.ntnu.fp.net.cl.KtnDatagram.Flag;
  */
 public class ConnectionImpl extends AbstractConnection {
 	//Keeps track of the used ports for each server port
-	private static Map<Integer, Boolean> usedPorts = Collections
-			.synchronizedMap(new HashMap<Integer, Boolean>());
+	private static Map<Integer, Boolean> usedPorts = Collections.synchronizedMap(new HashMap<Integer, Boolean>());
 
 	/**
 	 * Initializes initial sequence number and setup state machine.
@@ -80,7 +79,7 @@ public class ConnectionImpl extends AbstractConnection {
 		this.remotePort = remotePort;
 		
         if (state != State.CLOSED) {
-            throw new ConnectException("The socket is already connected");
+            throw new ConnectException("socket allready connected/in use");
         }
         Log.writeToLog("Trying to connect to: "
 							+ remoteAddress.getHostAddress() 
@@ -169,14 +168,11 @@ public class ConnectionImpl extends AbstractConnection {
 		return newConnection;
     }
 	
-	/**
-	 * @return An unused, random port between 10k and 20k.
-	 */
 	private static int getFreePort() {
 		int port;
 		
 		while (usedPorts.containsKey(
-					port = (int)(Math.random() * 30000) + 10000))//assuming it's not taken!
+					port = (int)(Math.random() * 30000) + 10000))
 			;
 		return port;
 	}
@@ -307,7 +303,9 @@ public class ConnectionImpl extends AbstractConnection {
 				//Give the server 10 seconds to close the connection
 				Thread.sleep(10000);
 			}
-			catch (Exception e) {}
+			catch (Exception e) {
+				e.printStackTrace();
+			}
 		}
 		else {
 			//Respond to disconnect request
@@ -353,7 +351,7 @@ public class ConnectionImpl extends AbstractConnection {
 			//An internal packet with a non-null payload is invalid
 			return false;
 		}
-		//All tests passed
+		//All tests passed :D
 		return true;
 	}
 }
