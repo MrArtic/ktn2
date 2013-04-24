@@ -98,7 +98,8 @@ public class ConnectionImpl extends AbstractConnection {
 
 			do {
 				try {
-					new ClSocket().send(synPacket);
+					simplySendPacket(synPacket);
+					//new ClSocket().send(synPacket);
 					sent = true;
 				} catch (ConnectException e) {
 					try {
@@ -248,8 +249,14 @@ public class ConnectionImpl extends AbstractConnection {
 		KtnDatagram received = null;
 
 		while (received == null) {
-			received = receivePacket(false);
-
+			try{
+				received = receivePacket(false);
+			}catch(EOFException e){
+				sendAck(disconnectRequest, false);
+				this.state = State.CLOSE_WAIT;
+				close();
+				throw e;
+			}
 			if (lastValidPacketReceived != null && 
 					received.getSeq_nr() <= lastValidPacketReceived.getSeq_nr()) {
 				//Ignore the already received packet
@@ -274,54 +281,101 @@ public class ConnectionImpl extends AbstractConnection {
 	 * @see Connection#close()
 	 */
 	public void close() throws IOException {
-		if (state != State.ESTABLISHED) {
-			throw new ConnectException("Cannot disconnect!");
-		}
-
-		if (disconnectRequest == null) {
-			//Make disconnect request
+		
+		if(state == State.CLOSE_WAIT){
+			KtnDatagram finPacket = constructInternalPacket(Flag.FIN);
+			
 			try {
-				sendFin();
-				state = State.FIN_WAIT_1;
-
-				KtnDatagram response = receiveAck();
+				Thread.sleep(1000);
+				System.out.println("Jeg ville sende FIN!!!");
+				simplySendPacket(finPacket);
+			} catch (ClException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 				
-				if (response.getFlag() == Flag.FIN) {
-					disconnectRequest = response;
-				}
-				state = State.FIN_WAIT_2;
-
-				//Listen for FIN packet
-				KtnDatagram	finPacket = receivePacket(true);
-
-				if (finPacket.getFlag() != Flag.FIN) {
-					throw new Exception("Did not receive expected FIN from server.");
-				}
-
-				sendAck(finPacket, false);
-
-				//Give the server 10 seconds to close the connection
-				Thread.sleep(10000);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				
 			}
-			catch (Exception e) {
+			
+			KtnDatagram ack = receiveAck();
+			this.state = State.CLOSED;
+		}
+		
+		
+		else if(this.state == State.ESTABLISHED){
+			KtnDatagram finPacket = constructInternalPacket(Flag.FIN);
+			try {
+				simplySendPacket(finPacket);
+			} catch (ClException e) {
+				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-		}
-		else {
-			//Respond to disconnect request
-			try {
-				sendAck(disconnectRequest, false);
-				state = State.CLOSE_WAIT;
-				
-				sendFin();
-				state = State.LAST_ACK;
-				
-				receiveAck();
+			this.state = State.FIN_WAIT_1;
+			KtnDatagram ackToFin = receiveAck();
+			this.state = State.FIN_WAIT_2;
+			
+			KtnDatagram FIN = receivePacket(true);
+			if(FIN == null){
+				System.out.println("Fin blei null");
 			}
-			catch (Exception e) {}
+			
+			sendAck(FIN, false);
+			this.state = State.TIME_WAIT;
+			try {
+				Thread.sleep(1000);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			this.state = State.CLOSED;	
 		}
-		//Close the connection on your side
-		state = State.CLOSED;
+		
+//		if (disconnectRequest == null) {
+//			//Make disconnect request
+//			try {
+//				sendFin();
+//				state = State.FIN_WAIT_1;
+//
+//				KtnDatagram response = receiveAck();
+//				
+//				if (response.getFlag() == Flag.FIN) {
+//					disconnectRequest = response;
+//				}
+//				state = State.FIN_WAIT_2;
+//
+//				//Listen for FIN packet
+//				KtnDatagram	finPacket = receivePacket(true);
+//
+//				if (finPacket.getFlag() != Flag.FIN) {
+//					throw new Exception("Did not receive expected FIN from server.");
+//				}
+//
+//				sendAck(finPacket, false);
+//
+//				//Give the server 10 seconds to close the connection
+//				Thread.sleep(10000);
+//			}
+//			catch (Exception e) {
+//				e.printStackTrace();
+//			}
+//		}
+//		else {
+//			//Respond to disconnect request
+//			try {
+//				sendAck(disconnectRequest, false);
+//				state = State.CLOSE_WAIT;
+//				
+//				sendFin();
+//				state = State.LAST_ACK;
+//				
+//				receiveAck();
+//			}
+//			catch (Exception e) {}
+//		}
+//		//Close the connection on your side
+//		state = State.CLOSED;
 	}
 
 	/**
