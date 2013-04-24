@@ -303,9 +303,7 @@ public class ConnectionImpl extends AbstractConnection {
 				//Give the server 10 seconds to close the connection
 				Thread.sleep(10000);
 			}
-			catch (Exception e) {
-				e.printStackTrace();
-			}
+			catch (Exception e) {}
 		}
 		else {
 			//Respond to disconnect request
