@@ -281,8 +281,12 @@ public class ConnectionImpl extends AbstractConnection {
 	 * @see Connection#close()
 	 */
 	public void close() throws IOException {
+			
+		/*
+		 * start of adabra edits
+		 */
 		
-		if(state == State.CLOSE_WAIT){
+		if(state == State.ESTABLISHED){
 			KtnDatagram finPacket = constructInternalPacket(Flag.FIN);
 			
 			try {
@@ -325,58 +329,14 @@ public class ConnectionImpl extends AbstractConnection {
 			this.state = State.TIME_WAIT;
 			try {
 				Thread.sleep(1000);
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-//				e.printStackTrace();
-			}
+			} catch (InterruptedException e) {}
 			this.state = State.CLOSED;	
 		}
-		
-//		if (disconnectRequest == null) {
-//			//Make disconnect request
-//			try {
-//				sendFin();
-//				state = State.FIN_WAIT_1;
-//
-//				KtnDatagram response = receiveAck();
-//				
-//				if (response.getFlag() == Flag.FIN) {
-//					disconnectRequest = response;
-//				}
-//				state = State.FIN_WAIT_2;
-//
-//				//Listen for FIN packet
-//				KtnDatagram	finPacket = receivePacket(true);
-//
-//				if (finPacket.getFlag() != Flag.FIN) {
-//					throw new Exception("Did not receive expected FIN from server.");
-//				}
-//
-//				sendAck(finPacket, false);
-//
-//				//Give the server 10 seconds to close the connection
-//				Thread.sleep(10000);
-//			}
-//			catch (Exception e) {
-//				e.printStackTrace();
-//			}
-//		}
-//		else {
-//			//Respond to disconnect request
-//			try {
-//				sendAck(disconnectRequest, false);
-//				state = State.CLOSE_WAIT;
-//				
-//				sendFin();
-//				state = State.LAST_ACK;
-//				
-//				receiveAck();
-//			}
-//			catch (Exception e) {}
-//		}
-//		//Close the connection on your side
-//		state = State.CLOSED;
-	}
+		/*
+		 * end  adabrakode
+		 */
+	}		
+
 
 	/**
 	 * Test a packet for transmission errors. This function should only called
