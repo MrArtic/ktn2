@@ -327,7 +327,7 @@ public class ConnectionImpl extends AbstractConnection {
 				Thread.sleep(1000);
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
-				e.printStackTrace();
+//				e.printStackTrace();
 			}
 			this.state = State.CLOSED;	
 		}
