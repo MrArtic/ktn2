@@ -14,7 +14,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.print.attribute.standard.JobMessageFromOperator;
+
 
 import no.ntnu.fp.net.admin.Log;
 import no.ntnu.fp.net.cl.ClException;
@@ -209,31 +209,6 @@ public class ConnectionImpl extends AbstractConnection {
 		}
 	}
 
-	private synchronized void sendFin() throws IOException {
-		int tries = 3;
-		boolean sent = false;
-		KtnDatagram finPacket = constructInternalPacket(Flag.FIN);
-
-		// Send the FIN, trying at most `tries' times.
-		Log.writeToLog(finPacket, "Sending FIN", "ConnectionImpl");
-
-		do {
-			try {
-				new ClSocket().send(finPacket);
-				sent = true;
-			} catch (Exception e) {
-				try {
-					Thread.sleep(100);
-				} catch (InterruptedException ex) {/*Ignore*/}
-			}
-		} while (!sent && (tries-- > 0));
-
-		if (!sent) {
-			nextSequenceNo--;
-			throw new ConnectException("Unable to send FIN.");
-		}
-	}
-
 	/**
 	 * Wait for incoming data.
 	 * 
@@ -252,6 +227,12 @@ public class ConnectionImpl extends AbstractConnection {
 			try{
 				received = receivePacket(false);
 			}catch(EOFException e){
+				try {
+					Thread.sleep(150);
+				} catch (InterruptedException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
 				sendAck(disconnectRequest, false);
 				this.state = State.CLOSE_WAIT;
 				close();
@@ -286,7 +267,7 @@ public class ConnectionImpl extends AbstractConnection {
 		 * start of adabra edits
 		 */
 		
-		if(state == State.ESTABLISHED){
+		if(state == State.CLOSE_WAIT){
 			KtnDatagram finPacket = constructInternalPacket(Flag.FIN);
 			
 			try {
@@ -311,6 +292,12 @@ public class ConnectionImpl extends AbstractConnection {
 		else if(this.state == State.ESTABLISHED){
 			KtnDatagram finPacket = constructInternalPacket(Flag.FIN);
 			try {
+				try {
+					Thread.sleep(1000);
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 				simplySendPacket(finPacket);
 			} catch (ClException e) {
 				// TODO Auto-generated catch block
